@@ -1,0 +1,215 @@
+# Diff Checker 프로젝트 가이드
+
+Windows용 Diff Checker 데스크톱 앱. Tauri v2 + React + Monaco Editor 기반.
+
+---
+
+## 기술 스택
+
+| 영역 | 기술 | 역할 |
+|------|------|------|
+| 데스크톱 프레임워크 | **Tauri v2** | 네이티브 윈도우, 파일 시스템 접근, 크로스플랫폼 빌드 |
+| 프론트엔드 | **React + TypeScript** | UI 레이아웃, 상태 관리 |
+| Diff 뷰어 | **Monaco Editor** (`@monaco-editor/react`) | Side-by-side / Inline diff 렌더링 |
+| 백엔드 | **Rust** | 파일 읽기 커맨드, 고성능 I/O |
+
+### 왜 이 조합인가
+
+- Tauri 바이너리 10~20MB (Electron 대비 1/10), 메모리 사용량 1/3 이하
+- Monaco Editor = VS Code의 diff editor 코어. 문법 하이라이팅, 미니맵, 라인 넘버 내장
+- 동일 코드베이스로 Windows / macOS / Linux 빌드 가능
+
+---
+
+## 사전 준비 (Windows)
+
+### 필수 설치
+
+1. **Rust** — https://rustup.rs 에서 `rustup-init.exe` 실행
+2. **Node.js** — v18+ (이미 설치되어 있다면 생략)
+3. **Visual Studio Build Tools** — "C++를 사용한 데스크톱 개발" 워크로드 선택 (Windows SDK 포함)
+4. **WebView2 Runtime** — Windows 10/11이면 기본 내장. 없으면 [다운로드](https://developer.microsoft.com/en-us/microsoft-edge/webview2/)
+
+### 설치 확인
+
+```bash
+rustc --version    # 1.77+ 권장
+node --version     # 18+
+npm --version
+```
+
+---
+
+## 프로젝트 생성
+
+```bash
+# Tauri v2 + React + TypeScript 템플릿
+npm create tauri-app@latest diff-checker -- --template react-ts
+
+cd diff-checker
+
+# 의존성 설치
+npm install
+
+# Monaco Editor
+npm install monaco-editor @monaco-editor/react
+
+# Tauri 플러그인 - 파일 다이얼로그
+cd src-tauri
+cargo add tauri-plugin-dialog
+cd ..
+```
+
+---
+
+## 프로젝트 구조
+
+```
+diff-checker/
+├── src/                          # React 프론트엔드
+│   ├── App.tsx                   # 메인 레이아웃 + DiffEditor 마운트
+│   ├── components/
+│   │   ├── DiffViewer.tsx        # Monaco DiffEditor 래퍼 컴포넌트
+│   │   ├── FileSelector.tsx      # 파일 선택 UI (좌/우 패널)
+│   │   └── Toolbar.tsx           # 상단 툴바 (view 모드 전환 등)
+│   ├── hooks/
+│   │   └── useFileLoader.ts      # Tauri 커맨드 호출 훅
+│   ├── main.tsx
+│   └── styles.css
+├── src-tauri/                    # Rust 백엔드
+│   ├── src/
+│   │   ├── lib.rs                # Tauri 커맨드 등록
+│   │   └── commands/
+│   │       └── file.rs           # 파일 읽기 커맨드
+│   ├── Cargo.toml
+│   └── tauri.conf.json           # 앱 설정 (타이틀, 윈도우 크기 등)
+├── package.json
+└── tsconfig.json
+```
+
+---
+
+## 핵심 구현 코드
+
+### 1. Monaco Diff Editor 컴포넌트
+
+```tsx
+// src/components/DiffViewer.tsx
+import { DiffEditor } from "@monaco-editor/react";
+
+interface DiffViewerProps {
+  original: string;
+  modified: string;
+  language?: string;
+  inline?: boolean;
+}
+
+export default function DiffViewer({
+  original,
+  modified,
+  language = "plaintext",
+  inline = false,
+}: DiffViewerProps) {
+  return (
+    <DiffEditor
+      height="100%"
+      language={language}
+      original={original}
+      modified={modified}
+      options={{
+        renderSideBySide: !inline,
+        originalEditable: false,
+        automaticLayout: true,
+        minimap: { enabled: true },
+        fontSize: 14,
+        wordWrap: "on",
+      }}
+      theme="vs-dark"
+    />
+  );
+}
+```
+
+### 2. Tauri 파일 읽기 커맨드 (Rust)
+
+```rust
+// src-tauri/src/commands/file.rs
+#[tauri::command]
+pub fn read_file(path: String) -> Result<String, String> {
+    std::fs::read_to_string(&path).map_err(|e| e.to_string())
+}
+```
+
+```rust
+// src-tauri/src/lib.rs
+mod commands;
+
+#[cfg_attr(mobile, tauri::mobile_entry_point)]
+pub fn run() {
+    tauri::Builder::default()
+        .plugin(tauri_plugin_dialog::init())
+        .invoke_handler(tauri::generate_handler![commands::file::read_file])
+        .run(tauri::generate_context!())
+        .expect("error while running tauri application");
+}
+```
+
+### 3. 파일 선택 + 로드 훅
+
+```typescript
+// src/hooks/useFileLoader.ts
+import { open } from "@tauri-apps/plugin-dialog";
+import { invoke } from "@tauri-apps/api/core";
+
+export async function selectAndReadFile(): Promise<{
+  path: string;
+  content: string;
+} | null> {
+  const selected = await open({
+    multiple: false,
+    filters: [
+      { name: "Text Files", extensions: ["txt", "md", "json", "ts", "tsx", "js", "jsx", "css", "html", "py", "rs", "go", "java"] },
+      { name: "All Files", extensions: ["*"] },
+    ],
+  });
+
+  if (!selected) return null;
+
+  const content = await invoke<string>("read_file", { path: selected });
+  return { path: selected, content };
+}
+```
+
+---
+
+## 개발 & 빌드
+
+```bash
+# 개발 서버 (핫리로드)
+npm run tauri dev
+
+# 프로덕션 빌드
+npm run tauri build
+# 결과물: src-tauri/target/release/bundle/
+```
+
+---
+
+## 추가 기능 아이디어
+
+- [ ] 드래그 앤 드롭 파일 로드
+- [ ] 언어 자동 감지 (확장자 → Monaco language ID 매핑)
+- [ ] Inline / Side-by-Side 뷰 토글
+- [ ] 다크/라이트 테마 전환
+- [ ] 폴더 diff (디렉토리 트리 비교)
+- [ ] diff 결과 export (HTML, PDF)
+- [ ] 최근 파일 히스토리
+
+---
+
+## 참고 링크
+
+- [Tauri v2 공식 문서](https://v2.tauri.app/)
+- [Monaco Editor React](https://github.com/suren-atoyan/monaco-react)
+- [Monaco Editor Playground](https://microsoft.github.io/monaco-editor/playground.html)
+- [tauri-plugin-dialog](https://v2.tauri.app/plugin/dialog/)
