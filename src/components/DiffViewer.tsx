@@ -7,6 +7,7 @@ interface DiffViewerProps {
   modified: string;
   onOriginalChange?: (value: string) => void;
   onModifiedChange?: (value: string) => void;
+  onEditorMount?: (editor: MonacoType.editor.IStandaloneDiffEditor) => void;
 }
 
 export default function DiffViewer({
@@ -14,11 +15,10 @@ export default function DiffViewer({
   modified,
   onOriginalChange,
   onModifiedChange,
+  onEditorMount,
 }: DiffViewerProps) {
   const editorRef = useRef<MonacoType.editor.IStandaloneDiffEditor | null>(null);
 
-  // 외부에서 콘텐츠가 변경될 때만 (파일 로드 등) 모델을 업데이트
-  // 현재 모델 값과 다를 때만 setValue → 사용자 타이핑 중에는 no-op
   useEffect(() => {
     const model = editorRef.current?.getOriginalEditor().getModel();
     if (model && model.getValue() !== original) {
@@ -37,10 +37,9 @@ export default function DiffViewer({
     <DiffEditor
       height="100%"
       language="plaintext"
-      // controlled prop 대신 ref로 관리 — prop을 동적으로 넘기면 setValue가 매번 호출되어
-      // 커서 리셋 + undo 히스토리 삭제 발생
       onMount={(editor) => {
         editorRef.current = editor;
+        onEditorMount?.(editor);
 
         editor.getOriginalEditor().onDidChangeModelContent(() => {
           onOriginalChange?.(editor.getOriginalEditor().getValue());

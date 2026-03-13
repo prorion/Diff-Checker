@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
+import type * as MonacoType from "monaco-editor";
 import Toolbar from "./components/Toolbar";
 import Panel from "./components/Panel";
 import DiffViewer from "./components/DiffViewer";
@@ -10,26 +11,46 @@ function App() {
   const [rightPath, setRightPath] = useState("");
   const [leftContent, setLeftContent] = useState("");
   const [rightContent, setRightContent] = useState("");
+  const [diffCount, setDiffCount] = useState<number | null>(null);
+
+  const diffEditorRef = useRef<MonacoType.editor.IStandaloneDiffEditor | null>(null);
+
+  const handleEditorMount = (editor: MonacoType.editor.IStandaloneDiffEditor) => {
+    diffEditorRef.current = editor;
+    editor.onDidUpdateDiff(() => {
+      setDiffCount(editor.getLineChanges()?.length ?? 0);
+    });
+  };
 
   const handleClear = () => {
     setLeftPath("");
     setRightPath("");
     setLeftContent("");
     setRightContent("");
+    setDiffCount(null);
   };
+
+  const navPrev = () => (diffEditorRef.current as any)?.goToDiff("previous");
+  const navNext = () => (diffEditorRef.current as any)?.goToDiff("next");
 
   return (
     <div
       className="app"
       onContextMenu={(e) => {
-        // Monaco 에디터 영역 외에서의 우클릭 컨텍스트 메뉴 차단
         const target = e.target as HTMLElement;
         if (!target.closest(".monaco-editor")) {
           e.preventDefault();
         }
       }}
     >
-      <Toolbar mode={mode} onModeChange={setMode} onClear={handleClear} />
+      <Toolbar
+        mode={mode}
+        onModeChange={setMode}
+        onClear={handleClear}
+        diffCount={diffCount}
+        onNavPrev={navPrev}
+        onNavNext={navNext}
+      />
 
       <div className="panels">
         <Panel
@@ -54,6 +75,7 @@ function App() {
           modified={rightContent}
           onOriginalChange={setLeftContent}
           onModifiedChange={setRightContent}
+          onEditorMount={handleEditorMount}
         />
       </div>
     </div>
