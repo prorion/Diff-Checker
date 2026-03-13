@@ -11,10 +11,6 @@ function App() {
   const [leftContent, setLeftContent] = useState("");
   const [rightContent, setRightContent] = useState("");
 
-  const handleModeChange = (newMode: "file" | "text") => {
-    setMode(newMode);
-  };
-
   const handleClear = () => {
     setLeftPath("");
     setRightPath("");
@@ -22,33 +18,32 @@ function App() {
     setRightContent("");
   };
 
-  const handleLeftLoad = (path: string, content: string) => {
-    setLeftPath(path);
-    setLeftContent(content);
-  };
-
-  const handleRightLoad = (path: string, content: string) => {
-    setRightPath(path);
-    setRightContent(content);
-  };
-
   return (
-    <div className="app">
-      <Toolbar mode={mode} onModeChange={handleModeChange} onClear={handleClear} />
+    <div
+      className="app"
+      onContextMenu={(e) => {
+        // Monaco 에디터 영역 외에서의 우클릭 컨텍스트 메뉴 차단
+        const target = e.target as HTMLElement;
+        if (!target.closest(".monaco-editor")) {
+          e.preventDefault();
+        }
+      }}
+    >
+      <Toolbar mode={mode} onModeChange={setMode} onClear={handleClear} />
 
       <div className="panels">
         <Panel
           side="left"
-          label="A"
+          label="Left"
           filePath={leftPath}
-          onLoad={handleLeftLoad}
+          onLoad={(path, content) => { setLeftPath(path); setLeftContent(content); }}
           textMode={mode === "text"}
         />
         <Panel
           side="right"
-          label="B"
+          label="Right"
           filePath={rightPath}
-          onLoad={handleRightLoad}
+          onLoad={(path, content) => { setRightPath(path); setRightContent(content); }}
           textMode={mode === "text"}
         />
       </div>
@@ -57,7 +52,6 @@ function App() {
         <DiffViewer
           original={leftContent}
           modified={rightContent}
-          textMode={mode === "text"}
           onOriginalChange={setLeftContent}
           onModifiedChange={setRightContent}
         />
