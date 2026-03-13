@@ -39,14 +39,14 @@ function App() {
       <div className="panels">
         <Panel
           side="left"
-          label="원본 (Original)"
+          label="A"
           filePath={leftPath}
           onLoad={handleLeftLoad}
           textMode={mode === "text"}
         />
         <Panel
           side="right"
-          label="수정본 (Modified)"
+          label="B"
           filePath={rightPath}
           onLoad={handleRightLoad}
           textMode={mode === "text"}

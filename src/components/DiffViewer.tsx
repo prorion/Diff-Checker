@@ -22,21 +22,19 @@ export default function DiffViewer({
       original={original}
       modified={modified}
       onMount={(editor) => {
-        if (textMode) {
-          const originalModel = editor.getOriginalEditor();
-          const modifiedModel = editor.getModifiedEditor();
+        const originalModel = editor.getOriginalEditor();
+        const modifiedModel = editor.getModifiedEditor();
 
-          originalModel.onDidChangeModelContent(() => {
-            onOriginalChange?.(originalModel.getValue());
-          });
-          modifiedModel.onDidChangeModelContent(() => {
-            onModifiedChange?.(modifiedModel.getValue());
-          });
-        }
+        originalModel.onDidChangeModelContent(() => {
+          onOriginalChange?.(originalModel.getValue());
+        });
+        modifiedModel.onDidChangeModelContent(() => {
+          onModifiedChange?.(modifiedModel.getValue());
+        });
       }}
       options={{
         renderSideBySide: true,
-        originalEditable: textMode,
+        originalEditable: true,
         readOnly: false,
         automaticLayout: true,
         minimap: { enabled: true },
