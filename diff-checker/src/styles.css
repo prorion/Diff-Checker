@@ -1,0 +1,167 @@
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body,
+#root {
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+  background: #1e1e1e;
+  color: #d4d4d4;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-size: 13px;
+}
+
+/* ── App layout ── */
+.app {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+}
+
+/* ── Toolbar ── */
+.toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px;
+  height: 44px;
+  background: #252526;
+  border-bottom: 1px solid #3c3c3c;
+  flex-shrink: 0;
+  user-select: none;
+}
+
+.toolbar-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #cccccc;
+  letter-spacing: 0.3px;
+}
+
+.toolbar-controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.mode-toggle {
+  display: flex;
+  background: #3c3c3c;
+  border-radius: 6px;
+  padding: 2px;
+}
+
+.mode-btn {
+  padding: 4px 14px;
+  border: none;
+  background: transparent;
+  color: #9d9d9d;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+  transition: background 0.15s, color 0.15s;
+}
+
+.mode-btn:hover {
+  color: #cccccc;
+}
+
+.mode-btn.active {
+  background: #0e639c;
+  color: #ffffff;
+}
+
+.btn-clear {
+  padding: 4px 12px;
+  border: 1px solid #5a5a5a;
+  background: transparent;
+  color: #9d9d9d;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+  transition: border-color 0.15s, color 0.15s;
+}
+
+.btn-clear:hover {
+  border-color: #9d9d9d;
+  color: #cccccc;
+}
+
+/* ── Panel headers ── */
+.panels {
+  display: flex;
+  flex-shrink: 0;
+  background: #2d2d2d;
+  border-bottom: 1px solid #3c3c3c;
+}
+
+.panel-header {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 14px;
+  min-height: 38px;
+  transition: background 0.15s;
+}
+
+.panel-header:first-child {
+  border-right: 1px solid #3c3c3c;
+}
+
+.panel-header.panel-dragging {
+  background: #0e4a6e;
+  outline: 2px dashed #007acc;
+  outline-offset: -2px;
+}
+
+.panel-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #c8c8c8;
+  white-space: nowrap;
+}
+
+.btn-open {
+  padding: 3px 10px;
+  border: 1px solid #5a5a5a;
+  background: transparent;
+  color: #9d9d9d;
+  border-radius: 3px;
+  cursor: pointer;
+  font-size: 11px;
+  white-space: nowrap;
+  transition: border-color 0.15s, color 0.15s;
+}
+
+.btn-open:hover {
+  border-color: #007acc;
+  color: #4fc3f7;
+}
+
+.panel-filepath {
+  font-size: 11px;
+  color: #4fc3f7;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 300px;
+  font-family: "Consolas", monospace;
+}
+
+.panel-hint {
+  font-size: 11px;
+  color: #5a5a5a;
+  font-style: italic;
+}
+
+/* ── Editor container ── */
+.editor-container {
+  flex: 1;
+  overflow: hidden;
+  min-height: 0;
+}
