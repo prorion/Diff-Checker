@@ -39,6 +39,8 @@ export default function DiffViewer({
       language="plaintext"
       onMount={(editor) => {
         editorRef.current = editor;
+        // options prop이 마운트 시 적용 안 되는 경우를 대비해 명시적으로 강제 적용
+        editor.updateOptions({ renderMarginRevertIcon: false });
         onEditorMount?.(editor);
 
         editor.getOriginalEditor().onDidChangeModelContent(() => {

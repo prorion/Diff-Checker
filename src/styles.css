@@ -212,6 +212,13 @@ body,
   font-style: italic;
 }
 
+/* ── Hide Monaco diff action buttons (copy left/right arrows) ── */
+.monaco-diff-editor .margin-view-overlays .codicon-arrow-right,
+.monaco-diff-editor .margin-view-overlays .codicon-arrow-left,
+.monaco-diff-editor .inline-diff-margin {
+  display: none !important;
+}
+
 /* ── Editor container ── */
 .editor-container {
   flex: 1;
