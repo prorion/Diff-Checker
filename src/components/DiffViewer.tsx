@@ -53,6 +53,7 @@ export default function DiffViewer({
         renderSideBySide: true,
         originalEditable: true,
         readOnly: false,
+        renderMarginRevertIcon: false,
         automaticLayout: true,
         minimap: { enabled: true },
         fontSize: 14,
